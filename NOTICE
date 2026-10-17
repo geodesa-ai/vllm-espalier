@@ -1,0 +1,20 @@
+vllm-espalier
+Copyright 2026 geodesa-ai
+
+Licensed under either of the Apache License, Version 2.0 (LICENSE-APACHE) or the MIT License (LICENSE-MIT), at your
+option, except for the files derived from TensorFold listed below, which are under the Apache License, Version 2.0
+only.
+
+This product includes software from TensorFold (https://github.com/ashhart/TensorFold), licensed under the
+Apache License, Version 2.0: vllm_espalier/csrc/experts.cpp, experts.cu and experts_grouped.cuh are derived from
+src/tensorfold/cuda/exl3/experts.{cpp,cu} and experts_grouped.cuh, and vllm_espalier/csrc/dense.cu is after
+src/tensorfold/cuda/exl3/linear.cu, at commit ed78d6fc204d89d90b045bf033d6551e7714f3a1 (python-0.6), with
+modifications noted in each file.
+
+TensorFold's EXL3 kernels are themselves after ExLlamaV3 (https://github.com/turboderp-org/exllamav3),
+MIT License, Copyright (c) 2025 Turboderp.
+
+TensorFold's NOTICE:
+  TensorFold
+  Copyright 2026 TensorFold contributors
+  https://github.com/ashhart/TensorFold

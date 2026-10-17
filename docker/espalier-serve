@@ -1,0 +1,33 @@
+#!/bin/bash
+# Serve $ESPALIER_MODEL with the settings vllm-espalier was validated with. Arguments are appended to (and override)
+# the defaults; pass --no-defaults to give vllm serve only your own arguments.
+#
+# The KV cache gets a fixed budget (KV_CACHE_MEMORY_BYTES): the GPU's memory minus ~11.5 GiB for weights, activations,
+# CUDA graphs and the API server's CUDA context (512 MiB on a 12 GB card). vLLM's own sizing (--gpu-memory-utilization with
+# --max-model-len auto) profiles a full-length request first and runs out of memory on 12 GB cards.
+set -e
+if [ "$1" = "--no-defaults" ]; then shift; exec vllm serve "$@"; fi
+model="$ESPALIER_MODEL"
+if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then model="$1"; shift; fi
+if [ -z "$KV_CACHE_MEMORY_BYTES" ]; then
+  # the first visible GPU (tensor parallel size 1)
+  total_mib=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | head -1 | tr -dc 0-9)
+  [ -n "$total_mib" ] || { echo "espalier-serve: no GPU visible (run with --gpus)" >&2; exit 1; }
+  kv_mib=$(( total_mib - ${ESPALIER_RESERVED_MIB:-11770} ))
+  [ "$kv_mib" -lt 384 ] && kv_mib=384
+  KV_CACHE_MEMORY_BYTES=$(( kv_mib * 1024 * 1024 ))
+fi
+echo "espalier-serve: $model, KV cache budget $(( KV_CACHE_MEMORY_BYTES / 1048576 )) MiB" >&2
+exec vllm serve "$model" \
+  --host 0.0.0.0 --port "${PORT:-8000}" \
+  --language-model-only \
+  --kv-cache-dtype fp8 \
+  --attention-backend TRITON_ATTN \
+  --speculative-config '{"method": "mtp", "num_speculative_tokens": 3}' \
+  --kv-cache-memory-bytes "$KV_CACHE_MEMORY_BYTES" \
+  --max-model-len "${MAX_MODEL_LEN:-auto}" \
+  --max-num-seqs "${MAX_NUM_SEQS:-2}" \
+  --compilation-config '{"cudagraph_capture_sizes": [1, 2, 4, 8]}' \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice --tool-call-parser qwen3_coder \
+  "$@"

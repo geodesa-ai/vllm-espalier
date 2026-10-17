@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vllm-espalier"
+version = "0.1.0"
+description = "vLLM plugin for Espalier trellis-quantized checkpoints (quant_method espalier): fused decode-in-GEMM kernels for dense layers and MoE experts"
+requires-python = ">=3.10"
+license = "(MIT OR Apache-2.0) AND Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE", "NOTICE"]
+dependencies = ["vllm==0.31.0", "ninja"]
+
+[project.entry-points."vllm.general_plugins"]
+espalier = "vllm_espalier:register"
+
+[tool.setuptools]
+packages = ["vllm_espalier"]
+
+[tool.setuptools.package-data]
+vllm_espalier = ["csrc/*.cu", "csrc/*.cuh", "csrc/*.cpp"]
